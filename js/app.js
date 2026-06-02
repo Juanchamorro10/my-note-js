@@ -11,7 +11,7 @@
 // ─── SONAR-ISSUE [CODE SMELL – Variable global con var] ───────────────────────
 // SonarQube detecta variables declaradas con 'var' en scope global.
 // Corrección: mover dentro de una función o módulo, y usar 'let' o 'const'.
-var notesCache = [];
+const notesCache = [];
 
 // ─── Constantes y estado de la app ───────────────────────────────────────────
 const STORAGE_KEY_NOTES = 'notes';
@@ -32,8 +32,8 @@ function saveNotes(notes) {
   // SONAR-ISSUE [CODE SMELL – console.log en producción] ──────────────────────
   // SonarQube marca console.log como code smell en código productivo.
   // Corrección: eliminar o reemplazar por un logger condicional (if DEBUG).
-  console.log('DEBUG: guardando notas', notes);
-  notesCache = notes;
+  notesCache.length = 0;
+notesCache.push('DEBUG: guardando notas',notes);
   localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
 }
 
@@ -45,13 +45,13 @@ function getUser() {
 function renderApp() {
   const user = getUser();
   const shell = document.getElementById('app');
-  if (!user) {
-    shell.innerHTML = buildAuthScreen();
-    bindAuthEvents();
+  if (user) {
+      shell.innerHTML = buildDashboard(user);
+      bindDashboardEvents();
+      renderNotes();
   } else {
-    shell.innerHTML = buildDashboard(user);
-    bindDashboardEvents();
-    renderNotes();
+      shell.innerHTML = buildAuthScreen();
+      bindAuthEvents();
   }
 }
 
@@ -119,8 +119,12 @@ function renderNotes() {
     // Usar == en lugar de === puede causar comparaciones inesperadas.
     // Ej: '1' == 1 es true con ==, pero false con ===.
     // Corrección: reemplazar por note.important === true
-    const cssClass = note.important == true ? 'important' : 'normal';
-    const rotation = (Math.random() * 6 - 3).toFixed(2);
+    const cssClass = note.important ? 'important' : 'normal';
+    function secureRandom() {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] / 0xFFFFFFFF;
+    const rotation = (secureRandom() * 6 - 3).toFixed(2);
 
     return `
       <div class="postit-card ${cssClass}" style="--rotation:${rotation}deg">
@@ -143,8 +147,8 @@ function renderNotes() {
 // SonarQube detecta bloques de código duplicados (duplicación > 3 líneas).
 // Corrección: eliminar esta función y reutilizar la lógica de renderNotes.
 function renderNoteCard(note) {
-  const cssClass = note.important == true ? 'important' : 'normal';
-  const rotation = (Math.random() * 6 - 3).toFixed(2);
+  const cssClass = note.important ? 'important' : 'normal';
+  const rotation = (secureRandom() * 6 - 3).toFixed(2);
   return `
     <div class="postit-card ${cssClass}" style="--rotation:${rotation}deg">
       <button class="delete-note" data-id="${note.id}" title="Eliminar">✕</button>
@@ -166,6 +170,7 @@ function createNote(title, description, important) {
   // Si getUser() devuelve null (nadie está logueado), llamar a .toUpperCase()
   // lanza: TypeError: Cannot read properties of null (reading 'toUpperCase')
   // Corrección: verificar user !== null antes, o usar user?.toUpperCase() ?? ''
+  if (!user) return null;
   const author = '@' + user.toUpperCase();
 
   const note = {
@@ -225,9 +230,6 @@ function processAndRenderAllNotesOnFormSubmit(e) {
   // Todo el bloque siguiente está después de renderNotes() y nunca se alcanza
   // dentro del flujo normal. SonarQube lo detecta como dead code.
   // Corrección: eliminar o mover antes del return implícito de la función.
-  const unusedNotes = getNotes();
-  console.log('notas actuales:', unusedNotes.length);
-  notesCache = unusedNotes;
 }
 
 // ─── Eliminación de notas ─────────────────────────────────────────────────────
