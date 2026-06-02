@@ -12,7 +12,11 @@
 // SonarQube detecta variables declaradas con 'var' en scope global.
 // Corrección: mover dentro de una función o módulo, y usar 'let' o 'const'.
 const notesCache = [];
-
+function secureRandom() {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] / 0xFFFFFFFF;
+    }
 // ─── Constantes y estado de la app ───────────────────────────────────────────
 const STORAGE_KEY_NOTES = 'notes';
 const STORAGE_KEY_USER = 'currentUser';
@@ -33,7 +37,7 @@ function saveNotes(notes) {
   // SonarQube marca console.log como code smell en código productivo.
   // Corrección: eliminar o reemplazar por un logger condicional (if DEBUG).
   notesCache.length = 0;
-notesCache.push('DEBUG: guardando notas',notes);
+notesCache.push(...notes);
   localStorage.setItem(STORAGE_KEY_NOTES, JSON.stringify(notes));
 }
 
@@ -120,10 +124,8 @@ function renderNotes() {
     // Ej: '1' == 1 es true con ==, pero false con ===.
     // Corrección: reemplazar por note.important === true
     const cssClass = note.important ? 'important' : 'normal';
-    function secureRandom() {
-    const arr = new Uint32Array(1);
-    crypto.getRandomValues(arr);
-    return arr[0] / 0xFFFFFFFF;
+    
+    
     const rotation = (secureRandom() * 6 - 3).toFixed(2);
 
     return `
