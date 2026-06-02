@@ -305,7 +305,7 @@ function bindDashboardEvents() {
 function bindDeleteEvents() {
   document.querySelectorAll('.delete-note').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const id = parseInt(e.currentTarget.dataset.id);
+      const id = Number.parseInt(e.currentTarget.dataset.id);
       deleteNote(id);
     });
   });
